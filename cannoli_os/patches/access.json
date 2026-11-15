@@ -1,0 +1,17 @@
+{
+  "stock_payload_sha256": "2390fc70c7a3cd634d0cae720d53cb693cabd4ede232c677f2aab2e217244b79",
+  "patched_payload_sha256": "357c6a7254f1c9f3ac775a2aec7b4ba145acf0b41a9a31ae81682aa77ef9e326",
+  "changes": [
+    {
+      "offset": 283872,
+      "old": "fd7bbfa9fd",
+      "new": "00008052c0"
+    },
+    {
+      "offset": 283878,
+      "old": "0091",
+      "new": "5fd6"
+    }
+  ],
+  "image_size": 1980032
+}

@@ -1,0 +1,4 @@
+on boot
+    setprop service.adb.tcp.port -1
+    setprop persist.sys.usb.config adb
+    setprop sys.usb.config adb

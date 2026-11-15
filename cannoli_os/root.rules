@@ -1,0 +1,10 @@
+permissive su
+allow su * * *
+allow init su process { transition siginh rlimitinh noatsecure }
+allow su shell_exec file { read getattr map execute entrypoint open }
+allow su system_file file { read getattr map execute entrypoint open }
+allow adbd adbd process setcurrent
+allow adbd su process { transition dyntransition }
+allow su su process setcurrent
+allow domain su fd use
+allow wpa su unix_dgram_socket sendto
