@@ -47,22 +47,19 @@ same USB serial you will pass below. Its output directory must contain
 CANNOLI_SERIAL=REPLACE_WITH_USB_SERIAL
 RECOVERY=/absolute/path/to/twrp_device_amazon_cannoli/work/recovery
 PORT=/absolute/path/to/echo-dot-assist
-adb start-server
-test -f "$HOME/.android/adbkey.pub"
 sudo python3 -m cannoli_os.build \
   --images "$PWD/work/inputs/images" \
   --recovery "$RECOVERY" \
   --adbd "$PWD/work/inputs/adbd" \
   --policy "$PWD/work/inputs/magiskpolicy32" \
   --ndk "$PWD/work/inputs/android-ndk-r21e" \
-  --adb-key "$HOME/.android/adbkey.pub" \
   --serial "$CANNOLI_SERIAL" \
   --port "$PORT" \
   --output "$PWD/work/bundle"
 ```
 
 Use a new output directory. Root is needed to preserve SquashFS ownership
-and SELinux labels. Only the public ADB key is read. The recovery manifest
+and SELinux labels. The recovery manifest
 must match the serial/build, image size and SHA-256; a mismatched or damaged
 recovery is rejected before repacking the OS.
 
@@ -103,8 +100,10 @@ uv run firebreak unlock --device cannoli \
   --serial "$CANNOLI_SERIAL" --backup /absolute/path/to/backups/cannoli-original
 ```
 
-Run that last command from the Firebreak checkout. Rooted A uses authenticated
-USB ADB with SELinux enforcing and a permissive root domain. OTA service
+Run that last command from the Firebreak checkout. Rooted A has a root USB
+ADB shell that asks for no key, as on every other Echo Dot Assist model; its
+network listener stays off, and the port's firewall gate governs adb over
+Wi-Fi. SELinux stays enforcing with a permissive root domain. OTA service
 autostart is disabled. TWRP B has an unauthenticated root USB shell.
 The installer replaces B before taking its A backup; follow its restore
 limitations. Do not use generic recovery wipes or ZIP flashing on Cannoli NAND.
@@ -124,8 +123,8 @@ uvx ruff format --check .
 
 See [repository conventions](CONVENTIONS.md), [release process](RELEASING.md),
 [source provenance](NOTICE.md)
-and [validation](VALIDATION.md). Firmware, toolchains, generated bundles and
-ADB keys are excluded from Git. Build artifacts are not automatically published.
+and [validation](VALIDATION.md). Firmware, toolchains and generated bundles
+are excluded from Git. Build artifacts are not automatically published.
 
 [firmware]: https://ftvdb.com/echo/firmware/com.amazon.cannoli.android.os/0bf96b3cd8fca30fdd12f61208e44d76-13323246980-fire-os-6-5-7-5-ns6575-8349-2026-10-27/
 [install]: https://github.com/Gamer92000/firebreak/blob/main/docs/cannoli.md

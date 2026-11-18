@@ -14,8 +14,8 @@ licenses and credits. Record changes against the preceding release.
 If downloadable artifacts are later released, attach them to the matching
 GitHub release with their sizes and SHA-256 checksums; keep them out of Git.
 Publish only artifacts intentionally built for distribution. Current recovery
-images contain a target USB serial and OS bundles contain a trusted host's
-public ADB key, so a maintainer's local bundle is not a generic release image.
+images contain a target USB serial, so a maintainer's local bundle is not a
+generic release image.
 
 An eventual XDA opening post should identify Cannoli/NS6575/8349, point to
 those exact sources and downloads, and link the installation and restore

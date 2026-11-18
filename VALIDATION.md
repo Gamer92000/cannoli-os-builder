@@ -40,3 +40,13 @@ sources, packaging passed, and the OS builder accepted the resulting recovery
 manifest and image. Recovery tests (46), lint and shell syntax passed.
 Firebreak's documentation lint passed after updating the repository links.
 No device was flashed for this layout change.
+
+## Keyless ADB follow-up
+
+2026-11-18: the OS builder stopped baking a host ADB key into `/adb_keys`
+and now sets `ro.adb.secure=0` instead of `1`, giving rooted A the keyless
+root shell every other Echo Dot Assist model has; its network listener stays
+off, and the port's firewall gate governs adb over Wi-Fi. The `--adb-key`
+build argument is gone. Builder tests (65) and lint pass. The OS patch is no
+longer AST-identical to the PR head, and no bundle has been built or flashed
+with this change yet.

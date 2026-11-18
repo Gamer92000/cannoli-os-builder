@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import os
 import re
 import shutil
@@ -12,7 +11,6 @@ from cannoli_os.images import ASSETS, STOCK, require, verified
 
 ADBD_SHA = "cc0178051cbf3fa0c7df5c880abd1becf55ce9f35b60ac851aae2edd106a3c18"
 ADB_DISABLE_CALLS = 4
-ADB_KEY_SIZE = 524
 POLICY_SHA = "e5fafc1fa9486950ce9ba476f5723754d260014515ced72b4560238e6c560f3a"
 UPDATE_HOSTS = (
     "amzdigitaldownloads.edgesuite.net",
@@ -58,6 +56,28 @@ def enable_adb(stage: Path) -> None:
     )
     require(count == ADB_DISABLE_CALLS, "Unexpected stock ADB disable calls")
     replace(flags, text.encode())
+
+
+def keyless_adb_props(text: str) -> str:
+    """default.prop for a root adb shell that asks for no key.
+
+    Every other Echo Dot Assist model works this way, so no host key is
+    baked in.  The TCP listener stays off; the port's firewall gate opens
+    adb over Wi-Fi.
+    """
+    for key, value in [
+        ("ro.secure", "0"),
+        ("ro.debuggable", "1"),
+        ("ro.adb.secure", "0"),
+    ]:
+        text, count = re.subn(
+            "^" + re.escape(key) + "=.*$",
+            key + "=" + value,
+            text,
+            flags=re.MULTILINE,
+        )
+        require(count == 1, "Unexpected stock property: " + key)
+    return text + "\nservice.adb.tcp.port=-1\n"
 
 
 def replace(path: Path, data: bytes) -> None:
@@ -314,7 +334,6 @@ def system(
     adbd: Path,
     policy: Path,
     output: Path,
-    adb_key: Path,
     port: Path | None = None,
     qemu: Path | None = None,
 ) -> None:
@@ -323,12 +342,6 @@ def system(
         "Build the system image with sudo to preserve stock ownership and labels",
     )
     emulation = emulator(qemu)
-    public_key = adb_key.read_bytes().strip()
-    require(len(public_key.splitlines()) == 1, "Use one Android ADB public key")
-    require(
-        len(base64.b64decode(public_key.split()[0], validate=True)) == ADB_KEY_SIZE,
-        "Invalid ADB public key",
-    )
     verified(images / "system.img", STOCK["system.img"])
     daemon = verified(adbd, ADBD_SHA)
     verified(policy, POLICY_SHA)
@@ -340,11 +353,6 @@ def system(
         if port is not None:
             install_port(stage, port)
         replace(stage / "sbin/adbd", daemon)
-        key = stage / "adb_keys"
-        key.write_bytes(public_key + b"\n")
-        key.chmod(0o644)
-        os.chown(key, 0, 0)
-        os.setxattr(key, "security.selinux", b"u:object_r:adb_keys_file:s0\0")
         enable_adb(stage)
         disable_updates(stage)
         init = stage / "init.rc"
@@ -360,20 +368,7 @@ def system(
         require(data.count(original) == 1, "Unexpected stock fstab")
         replace(fstab, data.replace(original, b"/ squashfs ro wait,slotselect"))
         props = stage / "default.prop"
-        text = props.read_text()
-        for key, value in [
-            ("ro.secure", "0"),
-            ("ro.debuggable", "1"),
-            ("ro.adb.secure", "1"),
-        ]:
-            text, count = re.subn(
-                "^" + re.escape(key) + "=.*$",
-                key + "=" + value,
-                text,
-                flags=re.MULTILINE,
-            )
-            require(count == 1, "Unexpected stock property: " + key)
-        replace(props, (text + "\nservice.adb.tcp.port=-1\n").encode())
+        replace(props, keyless_adb_props(props.read_text()).encode())
         run(
             "mksquashfs",
             stage,

@@ -19,7 +19,6 @@ def main() -> None:
         "recovery",
         "adbd",
         "policy",
-        "adb-key",
         "ndk",
         "output",
     ):
@@ -64,7 +63,6 @@ def main() -> None:
         args.adbd,
         args.policy,
         args.output,
-        args.adb_key,
         args.port,
         args.qemu,
     )

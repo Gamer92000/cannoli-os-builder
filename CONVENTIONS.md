@@ -29,8 +29,8 @@ This is an unofficial port; it is not maintained or endorsed by R0rt1z2.
 The OS repository is a stock Fire OS repacker, not a LineageOS device tree.
 His LineageOS OTA script is evidence for separating releases from source,
 not a compatible build or update implementation for Cannoli. Its automatic
-upload and OTA behavior is not copied. Device-specific recovery serials and
-host public ADB keys make our completed bundles local build outputs.
+upload and OTA behavior is not copied. Device-specific recovery serials
+make our completed bundles local build outputs.
 
 Each builder runs independently. `recovery.json` carries the serial, build,
 size and hash between them; Firebreak consumes the final format-1 bundle.

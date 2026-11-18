@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from cannoli_os.system import enable_adb, read_bundle
+from cannoli_os.system import enable_adb, keyless_adb_props, read_bundle
 
 if TYPE_CHECKING:
     import pathlib
@@ -39,6 +39,24 @@ def test_fos_flags_keep_root_adb_without_changing_other_flags(
     assert "\n    unset_adb_persistent_property\n" not in result
     assert result.endswith(source[source.index("if [ $(( $FOS_FLAGS_CONSOLE_ON") :])
     assert path.stat().st_mode & 0o777 == 0o755
+
+
+@pytest.mark.parametrize("missing", [False, True])
+def test_keyless_adb_props_root_shell_without_key_listener_off(
+    missing: bool,
+) -> None:
+    source = "ro.secure=1\nro.build.type=user\nro.debuggable=0\nro.adb.secure=1\n"
+    if missing:
+        source = source.replace("ro.adb.secure=1\n", "")
+        with pytest.raises(ValueError, match="ro.adb.secure"):
+            keyless_adb_props(source)
+        return
+    result = keyless_adb_props(source)
+    assert "ro.secure=0\n" in result
+    assert "ro.debuggable=1\n" in result
+    assert "ro.adb.secure=0\n" in result
+    assert "ro.build.type=user\n" in result
+    assert result.endswith("\nservice.adb.tcp.port=-1\n")
 
 
 def packed(version: bytes, *entries: tuple[bytes, int, bytes]) -> bytes:
