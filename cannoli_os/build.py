@@ -67,6 +67,7 @@ def main() -> None:
         args.qemu,
     )
     manifest = {
+        "adb": "keyless",
         "build": "NS6575/8349",
         "format": 1,
         "images": {},

@@ -23,7 +23,7 @@ Fire OS rather than building LineageOS, so it keeps its builder name and layout.
 ## Build on x86-64 Linux
 
 Use Python 3.10 or later. Run commands from this repository root. Allow
-several gigabytes here and tens of gigabytes for the separate TWRP source tree.
+about 6 GB here and 26 GB for the separate TWRP source tree.
 
 ```sh
 sudo apt install python3 unzip squashfs-tools qemu-user util-linux adb
@@ -71,9 +71,15 @@ the firmware build:
 
 ```sh
 cd /absolute/path/to/echo-dot-assist
-DEVICE=cannoli make all
+NDK=/absolute/path/to/cannoli-os-builder/work/inputs/android-ndk-r21e \
+  DEVICE=cannoli STUBS=1 make all
 DEVICE=cannoli scripts/bundle.sh secrets/update.key "$(DEVICE=cannoli make -s version)"
 ```
+
+`STUBS=1` builds without unpacking the firmware into that checkout (the
+binaries come out byte-identical; CI builds that way), and `NDK=` reuses
+the toolchain the preparer downloaded above. `make kernel-tools
+DEVICE=cannoli` first adds the Wi-Fi motion kernel module to the bundle.
 
 A stale `build/cannoli/hassmic.bundle` bakes a stale port; the builder
 cannot tell. `hassmic.rc` from the bundle diverts to `/init.hassmic.rc`,

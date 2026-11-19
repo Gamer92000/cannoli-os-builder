@@ -59,6 +59,7 @@ def validate(directory: Path, serial: str) -> None:
         and manifest["serial"] == serial,
         "Bundle serial or build differs",
     )
+    require(manifest.get("adb") == "keyless", "Unexpected bundle ADB mode")
     require(set(manifest["images"]) == set(LIMITS), "Bundle image set differs")
     for name, maximum in LIMITS.items():
         image = directory / (name + ".img")
