@@ -50,3 +50,31 @@ off, and the port's firewall gate governs adb over Wi-Fi. The `--adb-key`
 build argument is gone. Builder tests (65) and lint pass. The OS patch is no
 longer AST-identical to the PR head, and no bundle has been built or flashed
 with this change yet.
+
+## Unsigned FIT variant
+
+2026-11-26: an opt-in `--allow-unsigned-fit` build patches the two uses of
+`images->verify` in U-Boot 2019.04's `fit_image_load()`. At payload offsets
+`0x2f0f0` and `0x2f1c8`, it replaces the flag loads with `mov w0, #0` and
+`mov w3, #0`, respectively. This skips configuration and selected-image
+verification without changing any key, hash, RSA, or verifier return-ABI code.
+The RAM access and slot-selection loaders remain unchanged. Builder tests (68),
+Ruff checks, formatting, and `git diff --check` pass. With the option off, the
+loader build is unchanged; with it on, each persistent loader payload differs
+from its known-good build at only those two instructions, and every outer
+U-Boot signature still verifies.
+
+A RAM-only hardware test staged an unsigned FIT byte for byte with
+`fastboot stage` and invoked explicit `bootm` through `fastboot continue`.
+U-Boot printed no `Verifying Hash Integrity` stage, loaded the kernel, ramdisk,
+and FDT, and reached `Starting kernel ...`; this test wrote no NAND. The two
+persistent loaders were then written through TWRP's checked UBI writer and both
+passed readback verification. The installed `boot_a` prefix matched the tested
+FIT's SHA-256 exactly. Persistent B booted the signed TWRP FIT without printing
+verification stages, and persistent A selected the unsigned FIT configuration,
+loaded all three components, and reached `Starting kernel ...`.
+This validates both the signed-stock compatibility and unsigned-FIT paths.
+
+The test kernel subsequently reported an initramfs magic error and bytes from
+its FDT in the loaded initrd. This FIT layout issue occurred after U-Boot
+handed off to the kernel, before userspace startup.

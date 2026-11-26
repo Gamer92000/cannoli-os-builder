@@ -18,7 +18,7 @@ STOCK = {
 }
 
 
-def loaders(images: Path, output: Path) -> None:
+def loaders(images: Path, output: Path, unsigned_fit: bool = False) -> None:
     stock = Fit(verified(images / "uboot.img", STOCK["uboot.img"]))
     key = Fit(verified(images / "bl2-code.bin", STOCK["bl2-code.bin"])[0x353E8:])
     original = stock.prop(IMAGE, "data")
@@ -56,11 +56,31 @@ def loaders(images: Path, output: Path) -> None:
                 "Recovery load command differs",
             )
             data = data.replace(old, new)
+        if unsigned_fit and target in {"uboot_a", "uboot_b"}:
+            data = allow_unsigned_fit(bytes(data))
         built = shadow(stock, key, bytes(data))
         require(len(built) <= recipe["image_size"], "FIT exceeds image size")
         (output / (target + ".img")).write_bytes(
             built.ljust(recipe["image_size"], b"\xff" if name == "root-a" else b"\0")
         )
+
+
+def allow_unsigned_fit(payload: bytes) -> bytes:
+    data = bytearray(payload)
+    # U-Boot 2019.04 fit_image_load(): images->verify gates configuration
+    # verification and is passed to the inlined fit_image_select(). Force
+    # those two uses to zero without changing any verifier or its return ABI.
+    for offset, old, new, description in (
+        (0x2F0F0, "403b41b9", "00008052", "configuration verify flag"),
+        (0x2F1C8, "433b41b9", "03008052", "image verify flag"),
+    ):
+        expected = bytes.fromhex(old)
+        require(
+            data[offset : offset + len(expected)] == expected,
+            f"U-Boot {description} differs",
+        )
+        data[offset : offset + 4] = bytes.fromhex(new)
+    return bytes(data)
 
 
 def rebuild(fit: Fit, edits: list[tuple[int, int, bytes]]) -> bytes:

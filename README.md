@@ -98,6 +98,17 @@ The bundle contains `access`, `select-a`, `select-b`, `uboot_a`, `uboot_b`,
 The builder checks the format, image set, hashes, sizes, magic bytes and
 stock A boot image against Firebreak's format-1 contract.
 
+### Optional unsigned kernel FITs
+
+Pass `--allow-unsigned-fit` to the build command to let both persistent U-Boot
+slots start unsigned kernel FITs. This changes only `uboot_a.img` and
+`uboot_b.img`; the RAM access and slot-selection loaders stay unchanged, and
+properly signed stock FITs remain acceptable. The bundle manifest records this
+opt-in as `"fitVerification": "unlocked"`.
+
+This option does not build or sign a custom OS, change root-image
+verification, or add A/B update handling. Stock output remains the default.
+
 Follow [Firebreak's Cannoli installation guide][install] to install it:
 
 ```sh
