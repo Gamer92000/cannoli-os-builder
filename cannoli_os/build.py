@@ -37,13 +37,19 @@ def main() -> None:
         "qemu-arm/qemu-arm-static on PATH, then /usr/bin/qemu-arm-static — sudo's "
         "secure_path hides a user-local binary)",
     )
+    parser.add_argument(
+        "--allow-unsigned-fit",
+        action="store_true",
+        help="let both persistent U-Boot slots start unsigned kernel FITs; "
+        "stock output remains the default",
+    )
     parser.add_argument("--serial", required=True)
     args = parser.parse_args()
     args.output.mkdir(exist_ok=False, parents=True)
     for name, checksum in STOCK.items():
         verified(args.images / name, checksum)
     import_recovery(args.recovery, args.serial, args.output)
-    loaders(args.images, args.output)
+    loaders(args.images, args.output, unsigned_fit=args.allow_unsigned_fit)
     shutil.copyfile(args.images / "boot.img", args.output / "boot_a.img")
     compiler = args.ndk / "toolchains/llvm/prebuilt/linux-x86_64/bin"
     run(
@@ -74,6 +80,8 @@ def main() -> None:
         "product": "cannoli",
         "serial": args.serial,
     }
+    if args.allow_unsigned_fit:
+        manifest["fitVerification"] = "unlocked"
     for path in sorted(args.output.glob("*.img")):
         manifest["images"][path.stem] = {
             "sha256": sha(path.read_bytes()),
